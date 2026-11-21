@@ -29,11 +29,14 @@ export type Veiculo = {
   km: number | null;
   estado: EstadoVeiculo;
   notas: string | null;
+  carrocaria: string | null;
+  motorista_habitual_id: string | null;
 };
 
 export async function listarVeiculos(empresaId: string, opcoes: { incluirInativos?: boolean } = {}) {
-  return query<Veiculo & { proxima_validade: string | null }>(
-    `SELECT v.id, v.tipo, v.matricula, v.marca, v.modelo, v.ano, v.km, v.estado, v.notas,
+  return query<Veiculo & { proxima_validade: string | null; motorista_habitual: string | null }>(
+    `SELECT v.id, v.tipo, v.matricula, v.marca, v.modelo, v.ano, v.km, v.estado, v.notas, v.carrocaria, v.motorista_habitual_id,
+            (SELECT m.nome FROM motoristas m WHERE m.id = v.motorista_habitual_id) AS motorista_habitual,
             (SELECT min(d.data_validade) FROM documentos d
               WHERE d.veiculo_id = v.id AND d.data_validade IS NOT NULL) AS proxima_validade
        FROM veiculos v
@@ -45,7 +48,7 @@ export async function listarVeiculos(empresaId: string, opcoes: { incluirInativo
 
 export async function obterVeiculo(empresaId: string, id: string) {
   return queryOne<Veiculo>(
-    `SELECT id, tipo, matricula, marca, modelo, ano, km, estado, notas
+    `SELECT id, tipo, matricula, marca, modelo, ano, km, estado, notas, carrocaria, motorista_habitual_id
        FROM veiculos WHERE empresa_id = $1 AND id = $2`,
     [empresaId, id]
   );

@@ -1,4 +1,5 @@
 import { paraInputDataHora } from "@/lib/formato";
+import { CARROCARIAS } from "@/lib/carrocaria";
 import type { ServicoLinha } from "@/modules/servicos/queries";
 
 export function CamposServico({
@@ -32,6 +33,22 @@ export function CamposServico({
         <input name="destino" defaultValue={s?.destino} placeholder="Madrid" required />
       </label>
       <label>
+        Morada de carga <span className="ajuda">para o motorista navegar</span>
+        <input name="morada_carga" defaultValue={s?.morada_carga ?? ""} placeholder="Armazém, rua, cais" />
+      </label>
+      <label>
+        Morada de entrega
+        <input name="morada_entrega" defaultValue={s?.morada_entrega ?? ""} />
+      </label>
+      <label>
+        Contacto na carga
+        <input name="contacto_carga" type="tel" defaultValue={s?.contacto_carga ?? ""} />
+      </label>
+      <label>
+        Contacto na entrega
+        <input name="contacto_entrega" type="tel" defaultValue={s?.contacto_entrega ?? ""} />
+      </label>
+      <label>
         Data e hora de carga
         <input name="data_carga" type="datetime-local" defaultValue={paraInputDataHora(s?.data_carga)} />
       </label>
@@ -46,6 +63,21 @@ export function CamposServico({
       <label>
         Peso (kg)
         <input name="peso_kg" type="number" min={0} step="0.01" defaultValue={s?.peso_kg ?? ""} />
+      </label>
+      <label>
+        Carroçaria necessária
+        <select name="carrocaria" defaultValue={s?.carrocaria ?? ""}>
+          <option value="">Qualquer</option>
+          {Object.entries(CARROCARIAS).map(([k, l]) => (
+            <option key={k} value={k}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Referência do cliente
+        <input name="referencia_cliente" defaultValue={s?.referencia_cliente ?? ""} />
       </label>
       <label>
         Preço acordado (€)

@@ -29,6 +29,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {
         titulo: "Operação",
         itens: [
+          { href: "/planeamento", label: "Planeamento" },
+          { href: "/cargas", label: "Assistente de cargas" },
           { href: "/servicos", label: "Serviços" },
           { href: "/clientes", label: "Clientes" },
         ],
@@ -44,22 +46,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {
         titulo: "Empresa",
         itens: [
-          { href: "/empresa", label: "Documentos da empresa" },
+          { href: "/empresa", label: "Empresa e documentos" },
           ...(eGerente(u) ? [{ href: "/utilizadores", label: "Utilizadores" }] : []),
         ],
       }
     );
     inferior.push(
-      { href: "/painel", label: "Painel", icone: "painel" },
-      { href: "/servicos", label: "Serviços", icone: "servicos" },
-      { href: "/frota", label: "Frota", icone: "frota" },
-      { href: "/alertas", label: "Alertas", icone: "alertas", contador: criticos }
+      { href: "/painel", label: "Painel", icone: "painel", contador: criticos },
+      { href: "/planeamento", label: "Planear", icone: "planeamento" },
+      { href: "/cargas", label: "Cargas", icone: "cargas" },
+      { href: "/servicos", label: "Serviços", icone: "servicos" }
     );
   } else if (podeVerFrota(u)) {
     secoes.push({ itens: [{ href: "/frota", label: "Frota" }] });
   }
   if (temPerfil(u, "motorista") && u.motoristaId) {
-    secoes.push({ titulo: eEscritorio(u) ? "Motorista" : undefined, itens: [{ href: "/motorista", label: "Os meus serviços" }] });
+    secoes.push({ titulo: eEscritorio(u) ? "Motorista" : undefined, itens: [{ href: "/motorista", label: "Hoje" }] });
   }
 
   const rodape = (

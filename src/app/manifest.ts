@@ -20,8 +20,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Novo serviço", url: "/servicos/novo" },
-      { name: "Os meus serviços (motorista)", url: "/motorista" },
+      { name: "Planeamento", url: "/planeamento" },
+      { name: "Nova oferta de carga", url: "/cargas" },
+      { name: "Hoje (motorista)", url: "/motorista" },
     ],
   };
 }

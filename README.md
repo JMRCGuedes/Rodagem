@@ -12,6 +12,9 @@ Gestão de frota, motoristas e serviços para pequenas e médias transportadoras
 - **Alertas**: todos os prazos num só sítio, e resumo diário por email aos gerentes.
 - **Área do motorista** (telemóvel): os seus serviços, marcar carga e entrega, comunicar incidentes.
 - **Utilizadores e perfis**: gerente, gestor de tráfego, administrativo, motorista, oficina.
+- **Quadro de planeamento**: semana por camião, arrastar e largar, sugestão do melhor camião para cada pedido (livre, perto, documentos em dia, carroçaria certa), espaços livres com o sítio onde o camião fica e aviso de cargas de retorno.
+- **Assistente de cargas**: colar uma oferta (Wtransnet, email, WhatsApp), a IA preenche os campos (opcional), pontuação 0–100 explicável, camião sugerido, proposta pronta para WhatsApp/email, funil Nova → Contactada → Proposta → Aceite, e ao aceitar cria o serviço já planeado.
+- **App do motorista**: ordem de serviço com moradas, Navegar e Ligar, "Carreguei", "Vou atrasar", "Problema" e registo da entrega com foto da guia CMR.
 
 Fora do âmbito: GPS, descarga dos ficheiros do tacógrafo e faturação certificada. O Rodagem guarda as datas e avisa; esses sistemas continuam a ser os da empresa.
 
@@ -54,6 +57,18 @@ O ficheiro `render.yaml` descreve a infraestrutura (região Frankfurt):
 - **PostgreSQL** `rodagem-db`.
 
 Variáveis de ambiente: `DATABASE_URL`, `CRON_SECRET`, e opcionalmente `RESEND_API_KEY` + `ALERT_EMAIL_FROM` para o email diário.
+
+IA para ler ofertas (opcional; sem isto as ofertas preenchem-se à mão):
+
+| Variável | Valor |
+|---|---|
+| `IA_FORNECEDOR` | `anthropic`, `gemini` ou `openai` |
+| `IA_CHAVE` | chave da API desse fornecedor |
+| `IA_MODELO` | opcional (por omissão: `claude-haiku-5-5`, `gemini-2.5-flash`, `gpt-4o-mini`) |
+
+O plano gratuito do Gemini serve para testes, mas a Google usa esses dados para melhorar os seus produtos: com dados reais de clientes, usa um plano pago.
+
+Distâncias: geocodificação com o Nominatim (OpenStreetMap), com cache na tabela `locais`; os km são uma estimativa (linha reta × 1,25).
 
 ### Plano gratuito: o que ter em conta
 

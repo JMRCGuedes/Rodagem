@@ -17,6 +17,7 @@ export async function registarEmpresa(_prev: EstadoAcao, fd: FormData): Promise<
     z.object({
       empresa: texto("Indica o nome da empresa."),
       nif: textoOpc(),
+      localidade_base: textoOpc(),
       nome: texto("Indica o teu nome."),
       email,
       password,
@@ -29,7 +30,10 @@ export async function registarEmpresa(_prev: EstadoAcao, fd: FormData): Promise<
   let utilizadorId: string;
   try {
     utilizadorId = await transaction(async (c) => {
-      const e = await c.query<{ id: string }>("INSERT INTO empresas (nome, nif) VALUES ($1, $2) RETURNING id", [d.empresa, d.nif ?? null]);
+      const e = await c.query<{ id: string }>(
+        "INSERT INTO empresas (nome, nif, localidade_base) VALUES ($1, $2, $3) RETURNING id",
+        [d.empresa, d.nif ?? null, d.localidade_base ?? null]
+      );
       const u = await c.query<{ id: string }>(
         `INSERT INTO utilizadores (empresa_id, nome, email, password_hash, perfis)
          VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -126,4 +130,24 @@ export async function redefinirPassword(id: string, _prev: EstadoAcao, fd: FormD
   if (!r) return { erro: "Utilizador não encontrado." };
   if (id !== g.id) await query("DELETE FROM sessoes WHERE utilizador_id=$1", [id]);
   return { ok: "Palavra-passe alterada." };
+}
+
+/* ---------- Dados da empresa (gerente) ---------- */
+
+export async function atualizarEmpresa(_prev: EstadoAcao, fd: FormData): Promise<EstadoAcao> {
+  const g = await requireGerente();
+  const v = validar(
+    z.object({ nome: texto("Indica o nome da empresa."), nif: textoOpc(), localidade_base: textoOpc() }),
+    lerForm(fd)
+  );
+  if (!v.ok) return { erro: v.erro };
+  await query("UPDATE empresas SET nome=$2, nif=$3, localidade_base=$4 WHERE id=$1", [
+    g.empresaId,
+    v.dados.nome,
+    v.dados.nif ?? null,
+    v.dados.localidade_base ?? null,
+  ]);
+  revalidatePath("/empresa");
+  revalidatePath("/planeamento");
+  return { ok: "Dados da empresa guardados." };
 }

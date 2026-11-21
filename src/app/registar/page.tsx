@@ -31,6 +31,10 @@ export default async function Registar() {
               <input name="nif" inputMode="numeric" />
             </label>
             <label>
+              Localidade da sede <span className="ajuda">de onde saem os camiões, ex.: Guimarães</span>
+              <input name="localidade_base" />
+            </label>
+            <label>
               O seu nome
               <input name="nome" autoComplete="name" required />
             </label>

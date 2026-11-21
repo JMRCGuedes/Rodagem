@@ -26,12 +26,19 @@ function hojePorExtenso() {
 /** UC01 — o painel do dia: serviços ativos, veículos parados e prazos a vencer. */
 export default async function Painel() {
   const u = await requireEscritorio();
-  const [alertas, contagem, abertos, parados] = await Promise.all([
+  const [alertas, contagem, abertos, parados, avisos] = await Promise.all([
     listarAlertas(u.empresaId),
     contagemPorEstado(u.empresaId),
     listarServicos(u.empresaId, { estado: "abertos" }),
     query<{ id: string; matricula: string }>(
       "SELECT id, matricula FROM veiculos WHERE empresa_id=$1 AND estado='oficina' ORDER BY matricula",
+      [u.empresaId]
+    ),
+    query<{ id: string; servico_id: string; numero: number; tipo: string; descricao: string | null; ocorrido_em: string; utilizador: string | null }>(
+      `SELECT e.id, e.servico_id, s.numero, e.tipo, e.descricao, e.ocorrido_em, u.nome AS utilizador
+         FROM eventos_servico e JOIN servicos s ON s.id = e.servico_id LEFT JOIN utilizadores u ON u.id = e.utilizador_id
+        WHERE e.empresa_id=$1 AND e.tipo IN ('incidente','atraso') AND e.ocorrido_em > now() - interval '48 hours'
+        ORDER BY e.ocorrido_em DESC LIMIT 6`,
       [u.empresaId]
     ),
   ]);
@@ -81,6 +88,30 @@ export default async function Painel() {
         </section>
 
         <div className="pilha">
+          {avisos.length > 0 && (
+            <section className="cartao" style={{ borderColor: "#f3c3be" }}>
+              <h2 style={{ marginBottom: 8 }}>Avisos dos motoristas</h2>
+              <ul className="lista-alertas">
+                {avisos.map((a) => (
+                  <li key={a.id}>
+                    <span className={`alerta-icone ${a.tipo === "incidente" ? "tom-expirado" : "tom-urgente"}`} aria-hidden="true">
+                      {a.tipo === "incidente" ? "!" : "AT"}
+                    </span>
+                    <div className="alerta-texto">
+                      <Link href={`/servicos/${a.servico_id}`}>
+                        {referencia(a.numero)}
+                        {a.utilizador ? ` · ${a.utilizador}` : ""}
+                      </Link>
+                      <div>{a.descricao}</div>
+                    </div>
+                    <div className="alerta-quando">
+                      <div className="data">{dataHoraPt(a.ocorrido_em)}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <section className="cartao">
             <div className="cartao-cab">
               <h2>Serviços abertos</h2>

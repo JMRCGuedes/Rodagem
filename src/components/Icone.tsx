@@ -1,6 +1,8 @@
-export type NomeIcone = "painel" | "servicos" | "frota" | "alertas" | "motoristas" | "mais" | "menu" | "fechar" | "sair";
+export type NomeIcone = "planeamento" | "cargas" | "painel" | "servicos" | "frota" | "alertas" | "motoristas" | "mais" | "menu" | "fechar" | "sair";
 
 const PATHS: Record<NomeIcone, string> = {
+  planeamento: "M4 5h16v15H4zM4 10h16M9 5v15M8 3v4M16 3v4",
+  cargas: "M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7M12 11v10",
   painel: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
   servicos: "M4 6h16M4 12h16M4 18h10",
   frota: "M2 7h11v9H2zM13 10h4l3 3v3h-7zM6 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01",

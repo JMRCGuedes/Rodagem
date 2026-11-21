@@ -7,8 +7,9 @@ import type { PoolClient } from "pg";
 import { query, queryOne, transaction } from "@/lib/db";
 import { requireEscritorio, requireMotorista } from "@/lib/auth";
 import { decimalOpc, lerForm, texto, textoOpc, uuidOpc, validar, type EstadoAcao } from "@/lib/form";
-import { dataPt, deInputDataHora } from "@/lib/formato";
+import { deInputDataHora } from "@/lib/formato";
 import { ESTADOS_SERVICO, TRANSICOES, type EstadoServico } from "./estados";
+import { avisosAtribuicao } from "./verificacoes";
 
 const schemaDados = z.object({
   cliente_id: uuidOpc(),
@@ -20,7 +21,17 @@ const schemaDados = z.object({
   data_entrega: textoOpc(),
   preco: decimalOpc("Preço inválido."),
   notas: textoOpc(),
+  morada_carga: textoOpc(),
+  morada_entrega: textoOpc(),
+  contacto_carga: textoOpc(),
+  contacto_entrega: textoOpc(),
+  referencia_cliente: textoOpc(),
+  carrocaria: z.enum(["lona", "frigorifico", "caixa", "cisterna", "porta_contentores", "basculante", "plataforma", "outro"]).optional(),
 });
+
+function extras(d: z.infer<typeof schemaDados>) {
+  return [d.morada_carga ?? null, d.morada_entrega ?? null, d.contacto_carga ?? null, d.contacto_entrega ?? null, d.referencia_cliente ?? null, d.carrocaria ?? null];
+}
 
 const schemaAtribuicao = z.object({
   trator_id: uuidOpc(),
@@ -75,10 +86,11 @@ export async function criarServico(_prev: EstadoAcao, fd: FormData): Promise<Est
     );
     const ins = await c.query<{ id: string }>(
       `INSERT INTO servicos (empresa_id, numero, cliente_id, descricao_carga, peso_kg, origem, destino,
-                             data_carga, data_entrega, preco, notas)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
+                             data_carga, data_entrega, preco, notas,
+                             morada_carga, morada_entrega, contacto_carga, contacto_entrega, referencia_cliente, carrocaria)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
       [u.empresaId, rows[0]!.n, d.cliente_id ?? null, d.descricao_carga ?? null, d.peso_kg ?? null, d.origem, d.destino,
-       dt.carga, dt.entrega, d.preco ?? null, d.notas ?? null]
+       dt.carga, dt.entrega, d.preco ?? null, d.notas ?? null, ...extras(d)]
     );
     const novoId = ins.rows[0]!.id;
     await registarEvento(c, u.empresaId, novoId, "estado", "Serviço criado (Pedido).", u.id);
@@ -103,10 +115,12 @@ export async function atualizarServico(id: string, _prev: EstadoAcao, fd: FormDa
   }
   await query(
     `UPDATE servicos SET cliente_id=$3, descricao_carga=$4, peso_kg=$5, origem=$6, destino=$7,
-                         data_carga=$8, data_entrega=$9, preco=$10, notas=$11
+                         data_carga=$8, data_entrega=$9, preco=$10, notas=$11,
+                         morada_carga=$12, morada_entrega=$13, contacto_carga=$14, contacto_entrega=$15,
+                         referencia_cliente=$16, carrocaria=$17
       WHERE empresa_id=$1 AND id=$2`,
     [u.empresaId, id, d.cliente_id ?? null, d.descricao_carga ?? null, d.peso_kg ?? null, d.origem, d.destino,
-     dt.carga, dt.entrega, d.preco ?? null, d.notas ?? null]
+     dt.carga, dt.entrega, d.preco ?? null, d.notas ?? null, ...extras(d)]
   );
   revalidatePath(`/servicos/${id}`);
   revalidatePath("/servicos");
@@ -150,48 +164,14 @@ export async function atribuirServico(id: string, _prev: EstadoAcao, fd: FormDat
     if (!ok) return { erro: "Motorista não encontrado." };
   }
 
-  const avisos: string[] = [];
-  for (const vv of veiculos) {
-    if (vv.estado !== "ativo") avisos.push(`${vv.matricula} está ${vv.estado === "oficina" ? "na oficina" : "inativo"}.`);
-  }
-
-  // Documentos expirados na data de carga (ou hoje, se não houver data).
-  const dataRef = servico.data_carga ?? new Date().toISOString();
-  const expirados = await query<{ tipo: string; data_validade: string; matricula: string | null; motorista: string | null }>(
-    `SELECT d.tipo, d.data_validade, v.matricula, m.nome AS motorista
-       FROM documentos d
-       LEFT JOIN veiculos v ON v.id = d.veiculo_id
-       LEFT JOIN motoristas m ON m.id = d.motorista_id
-      WHERE d.empresa_id = $1
-        AND (d.veiculo_id = ANY($2::uuid[]) OR d.motorista_id = $3)
-        AND d.data_validade < ($4::timestamptz AT TIME ZONE 'Europe/Lisbon')::date`,
-    [u.empresaId, ids, d.motorista_id ?? null, dataRef]
-  );
-  for (const e of expirados) {
-    avisos.push(`${e.tipo} de ${e.matricula ?? e.motorista} expirado em ${dataPt(e.data_validade)}.`);
-  }
-
-  // Sobreposição com outros serviços planeados ou em curso.
-  if (servico.data_carga) {
-    const conflitos = await query<{ numero: number; matricula: string | null; motorista: string | null; trator_id: string | null; reboque_id: string | null; motorista_id: string | null }>(
-      `SELECT s.numero, s.trator_id, s.reboque_id, s.motorista_id, t.matricula, m.nome AS motorista
-         FROM servicos s
-         LEFT JOIN veiculos t ON t.id = s.trator_id
-         LEFT JOIN motoristas m ON m.id = s.motorista_id
-        WHERE s.empresa_id = $1 AND s.id <> $2
-          AND s.estado IN ('planeado','em_curso')
-          AND s.data_carga IS NOT NULL
-          AND tstzrange(s.data_carga, COALESCE(s.data_entrega, s.data_carga + interval '1 day'))
-              && tstzrange($3::timestamptz, COALESCE($4::timestamptz, $3::timestamptz + interval '1 day'))
-          AND (s.trator_id = ANY($5::uuid[]) OR s.reboque_id = ANY($5::uuid[]) OR s.motorista_id = $6)`,
-      [u.empresaId, id, servico.data_carga, servico.data_entrega, ids, d.motorista_id ?? null]
-    );
-    for (const c of conflitos) {
-      const ref = `S-${String(c.numero).padStart(4, "0")}`;
-      if (d.motorista_id && c.motorista_id === d.motorista_id) avisos.push(`${c.motorista} já está no serviço ${ref} nessas datas.`);
-      if (ids.some((x) => x === c.trator_id || x === c.reboque_id)) avisos.push(`Um dos veículos já está no serviço ${ref} nessas datas.`);
-    }
-  }
+  const avisos = await avisosAtribuicao({
+    empresaId: u.empresaId,
+    servicoId: id,
+    veiculoIds: ids,
+    motoristaId: d.motorista_id ?? null,
+    dataCarga: servico.data_carga,
+    dataEntrega: servico.data_entrega,
+  });
 
   if (avisos.length && d.confirmar_avisos !== "sim") {
     return { erro: `Atenção: ${avisos.join(" ")} Marca "Atribuir mesmo assim" para confirmar.` };

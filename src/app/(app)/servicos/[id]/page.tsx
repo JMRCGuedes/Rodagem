@@ -10,12 +10,15 @@ import { TIPOS_VEICULO, type TipoVeiculo } from "@/modules/frota/queries";
 import { ActionForm } from "@/components/ActionForm";
 import { EstadoTag, Topo } from "@/components/ui";
 import { CamposServico } from "../campos";
+import { Fotos } from "@/components/Fotos";
+import { CARROCARIAS, type Carrocaria } from "@/lib/carrocaria";
 
 const ROTULO_EVENTO: Record<string, string> = {
   estado: "Estado",
   carga: "Carga",
   entrega: "Entrega",
   incidente: "Incidente",
+  atraso: "Atraso",
   nota: "Nota",
 };
 
@@ -26,7 +29,7 @@ export default async function ServicoDetalhe({ params }: { params: Promise<{ id:
   const s = await obterServico(u.empresaId, id);
   if (!s) notFound();
 
-  const [eventos, veiculos, motoristas, clientes] = await Promise.all([
+  const [eventos, veiculos, motoristas, clientes, fotos] = await Promise.all([
     eventosServico(u.empresaId, id),
     query<{ id: string; matricula: string; tipo: TipoVeiculo; estado: string }>(
       "SELECT id, matricula, tipo, estado FROM veiculos WHERE empresa_id=$1 AND estado <> 'inativo' ORDER BY matricula",
@@ -34,6 +37,7 @@ export default async function ServicoDetalhe({ params }: { params: Promise<{ id:
     ),
     query<{ id: string; nome: string }>("SELECT id, nome FROM motoristas WHERE empresa_id=$1 AND ativo ORDER BY nome", [u.empresaId]),
     query<{ id: string; nome: string }>("SELECT id, nome FROM clientes WHERE empresa_id=$1 ORDER BY nome", [u.empresaId]),
+    query<{ id: string }>("SELECT id FROM anexos WHERE empresa_id=$1 AND servico_id=$2 ORDER BY criado_em", [u.empresaId, id]),
   ]);
   const motores = veiculos.filter((v) => v.tipo !== "reboque");
   const reboques = veiculos.filter((v) => v.tipo === "reboque");
@@ -82,6 +86,30 @@ export default async function ServicoDetalhe({ params }: { params: Promise<{ id:
             </dd>
             <dt>Preço</dt>
             <dd>{euros(s.preco)}</dd>
+            {(s.morada_carga || s.contacto_carga) && (
+              <>
+                <dt>Local de carga</dt>
+                <dd>{[s.morada_carga, s.contacto_carga].filter(Boolean).join(" · ")}</dd>
+              </>
+            )}
+            {(s.morada_entrega || s.contacto_entrega) && (
+              <>
+                <dt>Local de entrega</dt>
+                <dd>{[s.morada_entrega, s.contacto_entrega].filter(Boolean).join(" · ")}</dd>
+              </>
+            )}
+            {s.referencia_cliente && (
+              <>
+                <dt>Ref. cliente</dt>
+                <dd>{s.referencia_cliente}</dd>
+              </>
+            )}
+            {s.carrocaria && (
+              <>
+                <dt>Carroçaria</dt>
+                <dd>{CARROCARIAS[s.carrocaria as Carrocaria] ?? s.carrocaria}</dd>
+              </>
+            )}
             {s.notas && (
               <>
                 <dt>Notas</dt>
@@ -154,6 +182,12 @@ export default async function ServicoDetalhe({ params }: { params: Promise<{ id:
       <div className="grelha-2" style={{ marginTop: 16 }}>
         <section className="cartao">
           <h2 style={{ marginBottom: 14 }}>Histórico</h2>
+          {fotos.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ marginBottom: 8 }}>Guia de transporte</h3>
+              <Fotos ids={fotos.map((f) => f.id)} />
+            </div>
+          )}
           {eventos.length === 0 ? (
             <p className="muted small">Sem eventos.</p>
           ) : (

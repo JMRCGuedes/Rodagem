@@ -14,6 +14,12 @@ export type ServicoLinha = {
   data_entrega: string | null;
   preco: string | null;
   notas: string | null;
+  morada_carga: string | null;
+  morada_entrega: string | null;
+  contacto_carga: string | null;
+  contacto_entrega: string | null;
+  referencia_cliente: string | null;
+  carrocaria: string | null;
   cliente_id: string | null;
   cliente: string | null;
   trator_id: string | null;
@@ -27,6 +33,7 @@ export type ServicoLinha = {
 const SELECT = `
   SELECT s.id, s.numero, s.estado, s.origem, s.destino, s.descricao_carga, s.peso_kg,
          s.data_carga, s.data_entrega, s.preco, s.notas,
+         s.morada_carga, s.morada_entrega, s.contacto_carga, s.contacto_entrega, s.referencia_cliente, s.carrocaria,
          s.cliente_id, c.nome AS cliente,
          s.trator_id, t.matricula AS trator,
          s.reboque_id, r.matricula AS reboque,

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireFrota } from "@/lib/auth";
 import { eEscritorio } from "@/lib/perfis";
 import { query } from "@/lib/db";
+import { CARROCARIAS, type Carrocaria } from "@/lib/carrocaria";
 import { dataHoraPt, dataPt, numeroPt, somarDias } from "@/lib/formato";
 import { ESTADOS_VEICULO, obterVeiculo, TIPOS_COM_TACOGRAFO, TIPOS_VEICULO } from "@/modules/frota/queries";
 import { listarDocumentos, TIPOS_DOC_VEICULO } from "@/modules/documentos/queries";
@@ -22,7 +23,7 @@ export default async function Veiculo({ params }: { params: Promise<{ id: string
   if (!v) notFound();
   const editar = eEscritorio(u);
 
-  const [docs, servicos, descarga] = await Promise.all([
+  const [docs, servicos, descarga, motoristas] = await Promise.all([
     listarDocumentos(u.empresaId, { veiculoId: id }),
     query<{ id: string; numero: number; estado: EstadoServico; origem: string; destino: string; data_carga: string | null }>(
       `SELECT id, numero, estado, origem, destino, data_carga FROM servicos
@@ -34,6 +35,7 @@ export default async function Veiculo({ params }: { params: Promise<{ id: string
       "SELECT max(data)::text AS data FROM descargas_tacografo WHERE empresa_id=$1 AND veiculo_id=$2 AND origem='veiculo'",
       [u.empresaId, id]
     ),
+    query<{ id: string; nome: string }>("SELECT id, nome FROM motoristas WHERE empresa_id=$1 AND ativo ORDER BY nome", [u.empresaId]),
   ]);
   const ultimaDescarga = descarga[0]?.data ?? null;
   const temTacografo = TIPOS_COM_TACOGRAFO.includes(v.tipo);
@@ -52,6 +54,20 @@ export default async function Veiculo({ params }: { params: Promise<{ id: string
           <dl className="dl">
             <dt>Estado</dt>
             <dd>{ESTADOS_VEICULO[v.estado]}</dd>
+            {v.carrocaria && (
+              <>
+                <dt>Carroçaria</dt>
+                <dd>{CARROCARIAS[v.carrocaria as Carrocaria] ?? v.carrocaria}</dd>
+              </>
+            )}
+            {v.motorista_habitual_id && (
+              <>
+                <dt>Motorista habitual</dt>
+                <dd>
+                  <Link href={`/motoristas/${v.motorista_habitual_id}`}>{motoristas.find((m) => m.id === v.motorista_habitual_id)?.nome ?? "—"}</Link>
+                </dd>
+              </>
+            )}
             <dt>Ano</dt>
             <dd>{v.ano ?? "—"}</dd>
             <dt>Quilómetros</dt>
@@ -121,7 +137,7 @@ export default async function Veiculo({ params }: { params: Promise<{ id: string
           <details>
             <summary>Editar dados do veículo</summary>
             <ActionForm action={atualizarVeiculo.bind(null, id)} submitLabel="Guardar alterações">
-              <CamposVeiculo v={v} />
+              <CamposVeiculo v={v} motoristas={motoristas} />
             </ActionForm>
             <div style={{ marginTop: 18, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
               <p className="muted small" style={{ marginBottom: 8 }}>
