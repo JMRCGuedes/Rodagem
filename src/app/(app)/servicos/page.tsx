@@ -33,18 +33,18 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
           </Link>
         }
       />
-      <div className="acoes" style={{ marginBottom: 14 }}>
+      <nav className="filtros" aria-label="Filtrar por estado">
         {FILTROS.map((f) => (
           <Link
             key={f.valor}
             href={`/servicos?estado=${f.valor}${clienteId ? `&cliente=${clienteId}` : ""}`}
-            className={`btn ${estado === f.valor ? "btn-primario" : "btn-secundario"}`}
-            style={{ minHeight: 34, padding: "5px 12px" }}
+            className={`filtro${estado === f.valor ? " ativo" : ""}`}
+            aria-current={estado === f.valor ? "page" : undefined}
           >
             {f.label}
           </Link>
         ))}
-      </div>
+      </nav>
       <section className="cartao">
         {servicos.length === 0 ? (
           <Vazio>
@@ -52,7 +52,7 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
           </Vazio>
         ) : (
           <div className="tabela-wrap">
-            <table>
+            <table className="responsiva">
               <thead>
                 <tr>
                   <th>Ref.</th>
@@ -67,24 +67,27 @@ export default async function Servicos({ searchParams }: { searchParams: Promise
               <tbody>
                 {servicos.map((s) => (
                   <tr key={s.id}>
-                    <td className="mono">
-                      <Link href={`/servicos/${s.id}`}>
-                        <strong>{referencia(s.numero)}</strong>
+                    <td className="col-opc">
+                      <Link href={`/servicos/${s.id}`} className="ref">
+                        {referencia(s.numero)}
                       </Link>
                     </td>
                     <td>
-                      {s.origem} → {s.destino}
+                      <Link href={`/servicos/${s.id}`} style={{ color: "inherit", fontWeight: 600 }}>
+                        <span className="so-mobile muted">{referencia(s.numero)} · </span>
+                        {s.origem} → {s.destino}
+                      </Link>
                       {s.descricao_carga && <div className="muted small">{s.descricao_carga}</div>}
                     </td>
-                    <td>{s.cliente ?? "—"}</td>
-                    <td className="small">{dataHoraPt(s.data_carga)}</td>
+                    <td className="small">{s.cliente ?? "—"}</td>
+                    <td className="small" data-label="Carga">{dataHoraPt(s.data_carga)}</td>
                     <td className="small">
                       {s.trator ? <span className="mono">{s.trator}</span> : <span className="muted">sem veículo</span>}
                       {s.reboque && <span className="mono"> + {s.reboque}</span>}
                       <div className={s.motorista ? "" : "muted"}>{s.motorista ?? "sem motorista"}</div>
                     </td>
-                    <td className="num">{euros(s.preco)}</td>
-                    <td>
+                    <td className="num small col-opc">{euros(s.preco)}</td>
+                    <td className="col-fim">
                       <EstadoTag estado={s.estado} />
                     </td>
                   </tr>

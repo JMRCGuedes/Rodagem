@@ -88,7 +88,7 @@ export default async function Tacografo() {
             {bloco.lista.length === 0 ? (
               <Vazio>Nada para mostrar.</Vazio>
             ) : (
-              <table>
+              <table className="responsiva">
                 <thead>
                   <tr>
                     <th>{bloco.link === "/frota" ? "Veículo" : "Motorista"}</th>
@@ -105,9 +105,9 @@ export default async function Tacografo() {
                           {e.nome}
                         </Link>
                       </td>
-                      <td className="mono small">{dataPt(e.ultima)}</td>
-                      <td className="mono small">{e.ultima ? dataPt(e.proxima) : "—"}</td>
-                      <td>{estadoTag(e.dias, e.ultima)}</td>
+                      <td className="mono small" data-label="Última">{dataPt(e.ultima)}</td>
+                      <td className="mono small" data-label="Limite">{e.ultima ? dataPt(e.proxima) : "—"}</td>
+                      <td className="col-fim">{estadoTag(e.dias, e.ultima)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -123,7 +123,7 @@ export default async function Tacografo() {
           <Vazio>Ainda não há descargas registadas.</Vazio>
         ) : (
           <div className="tabela-wrap">
-            <table>
+            <table className="responsiva">
               <thead>
                 <tr>
                   <th>Data</th>
@@ -140,7 +140,7 @@ export default async function Tacografo() {
                     <td>{h.origem === "cartao" ? "Cartão" : "Veículo"}</td>
                     <td>{h.motorista ?? <span className="mono">{h.matricula}</span>}</td>
                     <td className="small">{h.notas ?? "—"}</td>
-                    <td className="small muted">{h.registado_por ?? "—"}</td>
+                    <td className="small muted col-opc">{h.registado_por ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

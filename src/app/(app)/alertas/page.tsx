@@ -23,12 +23,14 @@ export default async function Alertas({ searchParams }: { searchParams: Promise<
       <Topo
         titulo="Alertas"
         subtitulo={`Documentos e descargas do tacógrafo a vencer nos próximos ${horizonte} dias.`}
-        acoes={HORIZONTES.map((h) => (
-          <Link key={h} href={`/alertas?dias=${h}`} className={`btn ${h === horizonte ? "btn-primario" : "btn-secundario"}`}>
-            {h} dias
+      />
+      <nav className="filtros" aria-label="Horizonte">
+        {HORIZONTES.map((h) => (
+          <Link key={h} href={`/alertas?dias=${h}`} className={`filtro${h === horizonte ? " ativo" : ""}`}>
+            Próximos {h} dias
           </Link>
         ))}
-      />
+      </nav>
       {expirados.length > 0 && (
         <section className="cartao">
           <h2 style={{ marginBottom: 8 }}>Expirados ({expirados.length})</h2>

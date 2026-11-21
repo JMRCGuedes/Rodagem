@@ -6,27 +6,30 @@ import { diasAte, dataPt } from "@/lib/formato";
 export function Topo({
   titulo,
   subtitulo,
+  sobretitulo,
   migalhas,
   acoes,
 }: {
   titulo: ReactNode;
   subtitulo?: ReactNode;
+  sobretitulo?: ReactNode;
   migalhas?: { href: string; label: string }[];
   acoes?: ReactNode;
 }) {
   return (
     <header className="topo">
-      <div>
+      <div className="topo-texto">
         {migalhas && (
-          <div className="migalhas">
+          <nav className="migalhas" aria-label="Caminho">
             {migalhas.map((m, i) => (
               <span key={m.href}>
                 {i > 0 && " / "}
                 <Link href={m.href}>{m.label}</Link>
               </span>
             ))}
-          </div>
+          </nav>
         )}
+        {sobretitulo && <div className="sobretitulo">{sobretitulo}</div>}
         <h1>{titulo}</h1>
         {subtitulo && <p className="muted">{subtitulo}</p>}
       </div>

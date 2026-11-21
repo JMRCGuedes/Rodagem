@@ -24,7 +24,7 @@ export function Documentos({ documentos, tipos, veiculoId, motoristaId, podeEdit
         <Vazio>Sem documentos registados.</Vazio>
       ) : (
         <div className="tabela-wrap">
-          <table>
+          <table className="responsiva">
             <thead>
               <tr>
                 <th>Documento</th>
@@ -41,8 +41,8 @@ export function Documentos({ documentos, tipos, veiculoId, motoristaId, podeEdit
                     <strong>{d.tipo}</strong>
                     {d.notas && <div className="muted small">{d.notas}</div>}
                   </td>
-                  <td className="mono">{d.numero ?? "—"}</td>
-                  <td className="mono">{dataPt(d.data_emissao)}</td>
+                  <td className="mono small" data-label="N.º">{d.numero ?? "—"}</td>
+                  <td className="mono small col-opc">{dataPt(d.data_emissao)}</td>
                   <td>
                     <ValidadeTag data={d.data_validade} />
                   </td>

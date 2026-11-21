@@ -38,7 +38,7 @@ export default async function Frota({ searchParams }: { searchParams: Promise<{ 
           </Vazio>
         ) : (
           <div className="tabela-wrap">
-            <table>
+            <table className="responsiva">
               <thead>
                 <tr>
                   <th>Matrícula</th>
@@ -57,10 +57,10 @@ export default async function Frota({ searchParams }: { searchParams: Promise<{ 
                         <strong>{v.matricula}</strong>
                       </Link>
                     </td>
-                    <td>{TIPOS_VEICULO[v.tipo]}</td>
-                    <td>{[v.marca, v.modelo].filter(Boolean).join(" ") || "—"}</td>
-                    <td className="num">{numeroPt(v.km)}</td>
-                    <td>
+                    <td className="small muted">{TIPOS_VEICULO[v.tipo]}</td>
+                    <td className="small">{[v.marca, v.modelo].filter(Boolean).join(" ") || "—"}</td>
+                    <td className="num col-opc" data-label="Km">{numeroPt(v.km)}</td>
+                    <td className="col-fim">
                       <span className={`tag ${v.estado === "ativo" ? "tag-ok" : v.estado === "oficina" ? "tag-aviso" : "tag-neutro"}`}>
                         {ESTADOS_VEICULO[v.estado]}
                       </span>

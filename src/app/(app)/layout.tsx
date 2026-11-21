@@ -2,12 +2,19 @@ import { requireUtilizador } from "@/lib/auth";
 import { eEscritorio, eGerente, PERFIL_LABEL, podeVerFrota, temPerfil } from "@/lib/perfis";
 import { listarAlertas } from "@/modules/alertas/queries";
 import { sair } from "@/modules/contas/actions";
-import { Sidebar, type SecaoNav } from "@/components/Sidebar";
+import { Navegacao, type ItemInferior, type SecaoNav } from "@/components/Sidebar";
 import { Marca } from "@/components/Marca";
+import { Icone } from "@/components/Icone";
+
+function iniciais(nome: string) {
+  const partes = nome.trim().split(/\s+/);
+  return ((partes[0]?.[0] ?? "") + (partes.length > 1 ? partes[partes.length - 1]![0] : "")).toUpperCase();
+}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const u = await requireUtilizador();
   const secoes: SecaoNav[] = [];
+  const inferior: ItemInferior[] = [];
 
   if (eEscritorio(u)) {
     const alertas = await listarAlertas(u.empresaId);
@@ -42,6 +49,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         ],
       }
     );
+    inferior.push(
+      { href: "/painel", label: "Painel", icone: "painel" },
+      { href: "/servicos", label: "Serviços", icone: "servicos" },
+      { href: "/frota", label: "Frota", icone: "frota" },
+      { href: "/alertas", label: "Alertas", icone: "alertas", contador: criticos }
+    );
   } else if (podeVerFrota(u)) {
     secoes.push({ itens: [{ href: "/frota", label: "Frota" }] });
   }
@@ -51,22 +64,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const rodape = (
     <>
-      <strong>{u.nome}</strong>
-      <span>
-        {u.empresaNome} · {u.perfis.map((p) => PERFIL_LABEL[p]).join(", ")}
+      <span className="avatar" aria-hidden="true">
+        {iniciais(u.nome)}
       </span>
+      <div className="quem">
+        <strong>{u.nome}</strong>
+        <span>
+          {u.empresaNome} · {u.perfis.map((p) => PERFIL_LABEL[p]).join(", ")}
+        </span>
+      </div>
       <form action={sair}>
-        <button type="submit" className="link-sair">
-          Sair
+        <button type="submit" className="link-sair" aria-label="Sair" title="Sair">
+          <Icone nome="sair" tamanho={18} />
         </button>
       </form>
     </>
   );
 
   return (
-    <div className="app">
-      <Sidebar secoes={secoes} marca={<Marca href="/" />} rodape={rodape} />
-      <main className="conteudo">{children}</main>
-    </div>
+    <Navegacao secoes={secoes} inferior={inferior} marca={<Marca href="/" />} rodape={rodape}>
+      {children}
+    </Navegacao>
   );
 }

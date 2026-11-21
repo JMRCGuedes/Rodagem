@@ -20,7 +20,7 @@ export default async function Clientes() {
           <Vazio>Ainda não há clientes.</Vazio>
         ) : (
           <div className="tabela-wrap">
-            <table>
+            <table className="responsiva">
               <thead>
                 <tr>
                   <th>Nome</th>
@@ -37,12 +37,12 @@ export default async function Clientes() {
                         <strong>{c.nome}</strong>
                       </Link>
                     </td>
-                    <td className="mono">{c.nif ?? "—"}</td>
+                    <td className="mono small" data-label="NIF">{c.nif ?? "—"}</td>
                     <td>
                       {c.contacto ?? "—"}
                       {c.telefone && <div className="muted small">{c.telefone}</div>}
                     </td>
-                    <td className="num">
+                    <td className="num col-fim" data-label="Serviços">
                       <Link href={`/servicos?cliente=${c.id}`}>{c.servicos}</Link>
                     </td>
                   </tr>

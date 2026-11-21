@@ -34,7 +34,7 @@ export default async function Motoristas({ searchParams }: { searchParams: Promi
           </Vazio>
         ) : (
           <div className="tabela-wrap">
-            <table>
+            <table className="responsiva">
               <thead>
                 <tr>
                   <th>Nome</th>
@@ -53,10 +53,10 @@ export default async function Motoristas({ searchParams }: { searchParams: Promi
                       </Link>
                       {!m.ativo && <span className="tag tag-neutro" style={{ marginLeft: 8 }}>Inativo</span>}
                     </td>
-                    <td>{m.telefone ? <a href={`tel:${m.telefone}`}>{m.telefone}</a> : "—"}</td>
-                    <td>{m.categorias_carta ?? "—"}</td>
-                    <td>{m.tem_conta ? <span className="tag tag-ok">Com conta</span> : <span className="muted small">—</span>}</td>
-                    <td>
+                    <td className="small">{m.telefone ? <a href={`tel:${m.telefone}`}>{m.telefone}</a> : "—"}</td>
+                    <td className="small" data-label="Carta">{m.categorias_carta ?? "—"}</td>
+                    <td className="col-opc">{m.tem_conta ? <span className="tag tag-ok">Com conta</span> : <span className="muted small">—</span>}</td>
+                    <td className="col-fim">
                       <ValidadeTag data={m.proxima_validade} />
                     </td>
                   </tr>

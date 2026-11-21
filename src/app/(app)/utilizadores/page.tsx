@@ -27,7 +27,7 @@ export default async function Utilizadores() {
       <Topo titulo="Utilizadores" subtitulo="Contas com acesso ao Rodagem nesta empresa." />
       <section className="cartao">
         <div className="tabela-wrap">
-          <table>
+          <table className="responsiva">
             <thead>
               <tr>
                 <th>Nome</th>
@@ -44,7 +44,7 @@ export default async function Utilizadores() {
                     <strong>{x.nome}</strong>
                     {x.motorista && <div className="muted small">Motorista: {x.motorista}</div>}
                   </td>
-                  <td>{x.email}</td>
+                  <td className="small muted">{x.email}</td>
                   <td>
                     <div className="acoes">
                       {x.perfis.map((p) => (
